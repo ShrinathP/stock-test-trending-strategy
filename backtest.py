@@ -10,9 +10,11 @@ from dataclasses import dataclass
 from pathlib import Path
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 
 from data_loader import load_price_history
 from strategy import run_strategy
+from calculate_returns import calculate_returns
 
 
 @dataclass
@@ -72,7 +74,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def summarize_performance(df: pd.DataFrame) -> BacktestStats:
-    equity = df["equity_curve"]
+    equity_col = "trade_equity_curve" if "trade_equity_curve" in df.columns else "equity_curve"
+    equity = df[equity_col]
     total_return = equity.iloc[-1] / equity.iloc[0] - 1.0
     years = (df.index[-1] - df.index[0]).days / 365.25
     cagr = (equity.iloc[-1] / equity.iloc[0]) ** (1 / years) - 1 if years > 0 else 0.0
@@ -95,7 +98,73 @@ def summarize_performance(df: pd.DataFrame) -> BacktestStats:
 
 def save_equity_curve(df: pd.DataFrame, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    df[["equity_curve", "strategy_return", "position"]].to_csv(path)
+    df.to_csv(path)
+
+
+def plot_close_with_signals(df: pd.DataFrame) -> None:
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=df.index,
+            y=df["Close"],
+            mode="lines",
+            name="Close",
+            line=dict(color="steelblue"),
+        )
+    )
+
+    long_signals = df[df["signal"] == 1.0]
+    long_long_signals = df[df["signal"] == 2.0]
+    long_long_long_signals = df[df["signal"] == 3.0]
+    short_signals = df[df["signal"] == -1.0]
+
+    fig.add_trace(
+        go.Scatter(
+            x=long_signals.index,
+            y=long_signals["Close"],
+            mode="markers",
+            name="Long (1.0)",
+            marker=dict(color="green", symbol="triangle-up", size=10),
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=long_long_signals.index,
+            y=long_long_signals["Close"],
+            mode="markers",
+            name="Long (2.0)",
+            marker=dict(color="darkgreen", symbol="triangle-up", size=10),
+        )
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=long_long_long_signals.index,
+            y=long_long_long_signals["Close"],
+            mode="markers",
+            name="Long (3.0)",
+            marker=dict(color="purple", symbol="triangle-up", size=10),
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=short_signals.index,
+            y=short_signals["Close"],
+            mode="markers",
+            name="Short (-1.0)",
+            marker=dict(color="red", symbol="triangle-down", size=10),
+        )
+    )
+
+    fig.update_layout(
+        title="Close vs Signal (interactive)",
+        xaxis_title="Date",
+        yaxis_title="Close",
+        hovermode="x unified",
+    )
+    fig.write_html("signal_plot.html", auto_open=False)
+    fig.show()
 
 
 def main() -> None:
@@ -104,22 +173,15 @@ def main() -> None:
     results = run_strategy(
         df, args.short, args.long, args.trade_size, args.adx_window, args.capital
     )
+    results = calculate_returns(results, args.capital)
     stats = summarize_performance(results)
-    print(
-        "\n".join(
-            [
-                f"Total Return: {stats.total_return:.2%}",
-                f"CAGR: {stats.cagr:.2%}",
-                f"Max Drawdown: {stats.max_drawdown:.2%}",
-                f"Sharpe (daily->annualized): {stats.sharpe:.2f}",
-                f"Trades: {stats.trades}",
-                f"Final Equity: {results['equity_curve'].iloc[-1]:,.2f}",
-            ]
-        )
-    )
+    print(f"Total Return: {stats.total_return:.2%}")
+    print(f"CAGR: {stats.cagr:.2%}")
     if args.out:
         save_equity_curve(results, args.out)
         print(f"\nSaved equity curve to {args.out}")
+
+    plot_close_with_signals(results)
 
 
 if __name__ == "__main__":

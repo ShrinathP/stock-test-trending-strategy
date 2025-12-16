@@ -38,3 +38,14 @@ python backtest.py \
 ## Output
 
 The script prints summary stats (total return, CAGR, drawdown, Sharpe, trades). If `--out` is provided, the resulting CSV also contains `ADX_<window>`, `ADX_<window>_slope`, `+DI_<window>`, `-DI_<window>`, and `SMA_<window>_slope` columns for additional analysis or filtering. Slope columns represent the percentage change over the prior observation (two-session lookback, expressed in %/day), so negative values still indicate downward momentum.
+
+Do this - 
+If -ADX is greater than +ADX and ADX value is high and increasing then exit with -1
+
+
+https://invezz.com/news/2025/12/04/adobe-stock-is-extremely-cheap-amid-ai-fears-is-it-a-buy/
+ADBE stock price
+
+The stock has formed a falling wedge pattern, which is comprised of two descending and converging trendlines. This pattern is one of the most common bullish reversal signs in technical analysis.
+
+Therefore, the most likely scenario is where the ADBE stock price rebounds, and possibly hit the psychological point at $400, which is about 22% above the current level. 

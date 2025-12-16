@@ -1,4 +1,6 @@
 numpy>=1.24
 pandas>=2.0
 TA-Lib>=0.4.0
-
+plotly>=5.20
+python-dotenv==1.0.0
+fyers-apiv3==3.1.4
