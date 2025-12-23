@@ -68,7 +68,7 @@ def historical_bydate(symbol, sd, ed, interval):
 # historical_bydate('NSE:SBIN-EQ', '2023-06-14', '2023-06-15', '2')
 
 
-sd = datetime.date(2021,1,1)
+sd = datetime.date(2024,1,1)
 # enddate = datetime.date(2023,12,31)
 enddate = datetime.datetime.now().date()
 df = pd.DataFrame()
